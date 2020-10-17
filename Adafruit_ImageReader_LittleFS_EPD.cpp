@@ -1,4 +1,4 @@
-#include "Adafruit_ImageReader_EPD.h"
+#include "Adafruit_ImageReader_LittleFS_EPD.h"
 
 #ifdef __AVR__
 #define BUFPIXELS 24 ///<  24 * 5 =  120 bytes
@@ -18,7 +18,7 @@
              Vertical offset in pixels; top edge = 0, positive = down.
     @return  None (void).
 */
-void Adafruit_Image_EPD::draw(Adafruit_EPD &epd, int16_t x, int16_t y) {
+void Adafruit_Image_EPD_LittleFS::draw(Adafruit_EPD &epd, int16_t x, int16_t y) {
   int16_t col = x, row = y;
   if (format == IMAGE_1) {
     uint8_t *buffer = canvas.canvas1->getBuffer();
@@ -75,17 +75,9 @@ void Adafruit_Image_EPD::draw(Adafruit_EPD &epd, int16_t x, int16_t y) {
 /*!
     @brief   Constructor.
     @return  Adafruit_ImageReader object.
-    @param   fs
-             FAT filesystem associated with this Adafruit_ImageReader
-             instance. Any images to load will come from this filesystem;
-             if multiple filesystems are required, each will require its
-             own Adafruit_ImageReader object. The filesystem does NOT need
-             to be initialized yet when passed in here (since this will
-             often be in pre-setup() declaration, but DOES need initializing
-             before any of the image loading or size functions are called!
 */
-Adafruit_ImageReader_EPD::Adafruit_ImageReader_EPD(FatFileSystem &fs)
-    : Adafruit_ImageReader(fs) {}
+Adafruit_ImageReader_LittleFS_EPD::Adafruit_ImageReader_LittleFS_EPD()
+    : Adafruit_ImageReader_LittleFS() {}
 
 /*!
     @brief   Loads BMP image file from SD card directly to Adafruit_EPD screen.
@@ -106,7 +98,7 @@ Adafruit_ImageReader_EPD::Adafruit_ImageReader_EPD(FatFileSystem &fs)
     @return  One of the ImageReturnCode values (IMAGE_SUCCESS on successful
              completion, other values on failure).
 */
-ImageReturnCode Adafruit_ImageReader_EPD::drawBMP(char *filename,
+ImageReturnCode Adafruit_ImageReader_LittleFS_EPD::drawBMP(char *filename,
                                                   Adafruit_EPD &epd, int16_t x,
                                                   int16_t y, boolean transact) {
   uint16_t epdbuf[BUFPIXELS]; // Temp space for buffering EPD data
@@ -145,7 +137,7 @@ ImageReturnCode Adafruit_ImageReader_EPD::drawBMP(char *filename,
     @return  One of the ImageReturnCode values (IMAGE_SUCCESS on successful
              completion, other values on failure).
 */
-ImageReturnCode Adafruit_ImageReader_EPD::coreBMP(
+ImageReturnCode Adafruit_ImageReader_LittleFS_EPD::coreBMP(
     char *filename,    // SD file to load
     Adafruit_EPD *epd, // Pointer to TFT object, or NULL if to image
     uint16_t *dest,    // EPD working buffer, or NULL if to canvas
@@ -193,7 +185,7 @@ ImageReturnCode Adafruit_ImageReader_EPD::coreBMP(
     return IMAGE_SUCCESS;
 
   // Open requested file on SD card
-  if (!(file = filesys->open(filename, FILE_READ))) {
+  if (!(file = LittleFS.open(filename, "r"))) {
     return IMAGE_ERR_FILE_NOT_FOUND;
   }
 
@@ -338,7 +330,7 @@ ImageReturnCode Adafruit_ImageReader_EPD::coreBMP(
                   if (transact) {
                     epd->endWrite(); // End EPD SPI transaction
                   }
-                  file.seek(bmpPos);     // Seek = SD transaction
+                  file.seek(bmpPos, SeekSet);     // Seek = SD transaction
                   srcidx = sizeof sdbuf; // Force buffer reload
                 }
                 for (col = 0; col < loadWidth; col++) { // For each pixel...
@@ -355,12 +347,12 @@ ImageReturnCode Adafruit_ImageReader_EPD::coreBMP(
                               bytesThisPass;
                       while (bytesToGo > 0) {
                         bytesThisPass = min(bytesToGo, 512);
-                        file.read(&sdbuf[bytesRead], bytesThisPass);
+                        file.readBytes(&sdbuf[bytesRead], bytesThisPass);
                         bytesRead += bytesThisPass;
                         bytesToGo -= bytesThisPass;
                       }
 #else
-                      file.read(sdbuf, sizeof sdbuf); // Load from SD
+                      file.readBytes(sdbuf, sizeof sdbuf); // Load from SD
 #endif
                       if (transact)
                         epd->startWrite(); // Start EPD SPI transact
@@ -382,7 +374,7 @@ ImageReturnCode Adafruit_ImageReader_EPD::coreBMP(
                         destidx = 0; // and reset dest index
                       }
                     } else {                          // Canvas is simpler,
-                      file.read(sdbuf, sizeof sdbuf); // just load sdbuf
+                      file.readBytes(sdbuf, sizeof sdbuf); // just load sdbuf
                     }                                 // (destidx never resets)
                     srcidx = 0;                       // Reset bmp buf index
                   }

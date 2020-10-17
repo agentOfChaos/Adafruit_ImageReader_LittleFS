@@ -12,22 +12,22 @@
  *
  * BSD license, all text here must be included in any redistribution.
  */
-#ifndef __ADAFRUIT_IMAGE_READER_EPD_H__
-#define __ADAFRUIT_IMAGE_READER_EPD_H__
+#ifndef __ADAFRUIT_IMAGE_READER_LITTLEFS_EPD_H__
+#define __ADAFRUIT_IMAGE_READER_LITTLEFS_EPD_H__
 
 #include "Adafruit_EPD.h"
-#include "Adafruit_ImageReader.h"
+#include "Adafruit_ImageReader_LittleFS.h"
 
 /*!
    @brief  Data bundle returned with an image loaded to RAM. Used by
            ImageReader.loadBMP() and Image.draw(), not ImageReader.drawBMP().
 */
-class Adafruit_Image_EPD : public Adafruit_Image {
+class Adafruit_Image_EPD_LittleFS : public Adafruit_Image_LittleFS {
 public:
   void draw(Adafruit_EPD &epd, int16_t x, int16_t y);
 
 protected:
-  friend class Adafruit_ImageReader_EPD; ///< Loading occurs here
+  friend class Adafruit_ImageReader_LittleFS_EPD; ///< Loading occurs here
 };
 
 /*!
@@ -42,9 +42,9 @@ protected:
            bizarre (passing display object as an argument), see examples
            for use.
 */
-class Adafruit_ImageReader_EPD : public Adafruit_ImageReader {
+class Adafruit_ImageReader_LittleFS_EPD : public Adafruit_ImageReader_LittleFS {
 public:
-  Adafruit_ImageReader_EPD(FatFileSystem &fs);
+  Adafruit_ImageReader_LittleFS_EPD();
   ImageReturnCode drawBMP(char *filename, Adafruit_EPD &epd, int16_t x,
                           int16_t y, boolean transact = true);
 
@@ -54,4 +54,4 @@ private:
                           boolean transact);
 };
 
-#endif // __ADAFRUIT_IMAGE_READER_EPD_H__
+#endif // __ADAFRUIT_IMAGE_READER_LITTLEFS_EPD_H__

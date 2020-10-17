@@ -21,11 +21,6 @@
  * plus a display device-specific library such as
  * <a href="https://github.com/adafruit/Adafruit_ILI9341">Adafruit_ILI9341</a>
  * or other subclasses of SPITFT. Filesystem reading is handled through the
- * <a href="https://github.com/adafruit/Adafruit_SPIFlash">Adafruit_SPIFlash</a>
- * library, which in turn relies on
- * <a href="https://github.com/adafruit/SdFat">SdFat</a>.
- * Please make sure you have installed the latest versions before
- * using this library.
  *
  * @section author Author
  *
@@ -36,7 +31,7 @@
  * BSD license, all text here must be included in any redistribution.
  */
 
-#include "Adafruit_ImageReader.h"
+#include "Adafruit_ImageReader_LittleFS.h"
 
 // Buffers in BMP draw function (to screen) require 5 bytes/pixel: 3 bytes
 // for each BMP pixel (R+G+B), 2 bytes for each TFT pixel (565 color).
@@ -64,7 +59,7 @@
     @brief   Constructor.
     @return  'Empty' Adafruit_Image object.
 */
-Adafruit_Image::Adafruit_Image(void)
+Adafruit_Image_LittleFS::Adafruit_Image_LittleFS(void)
     : mask(NULL), palette(NULL), format(IMAGE_NONE) {
   canvas.canvas1 = NULL;
 }
@@ -73,14 +68,14 @@ Adafruit_Image::Adafruit_Image(void)
     @brief   Destructor.
     @return  None (void).
 */
-Adafruit_Image::~Adafruit_Image(void) { dealloc(); }
+Adafruit_Image_LittleFS::~Adafruit_Image_LittleFS(void) { dealloc(); }
 
 /*!
     @brief   Deallocates memory associated with Adafruit_Image object
              and resets member variables to 'empty' state.
     @return  None (void).
 */
-void Adafruit_Image::dealloc(void) {
+void Adafruit_Image_LittleFS::dealloc(void) {
   if (format == IMAGE_1) {
     if (canvas.canvas1) {
       delete canvas.canvas1;
@@ -112,7 +107,7 @@ void Adafruit_Image::dealloc(void) {
     @brief   Get width of Adafruit_Image object.
     @return  Width in pixels, or 0 if no image loaded.
 */
-int16_t Adafruit_Image::width(void) const {
+int16_t Adafruit_Image_LittleFS::width(void) const {
   if (format != IMAGE_NONE) { // Image allocated?
     if (format == IMAGE_1)
       return canvas.canvas1->width();
@@ -128,7 +123,7 @@ int16_t Adafruit_Image::width(void) const {
     @brief   Get height of Adafruit_Image object.
     @return  Height in pixels, or 0 if no image loaded.
 */
-int16_t Adafruit_Image::height(void) const {
+int16_t Adafruit_Image_LittleFS::height(void) const {
   if (format != IMAGE_NONE) { // Image allocated?
     if (format == IMAGE_1)
       return canvas.canvas1->height();
@@ -156,7 +151,7 @@ int16_t Adafruit_Image::height(void) const {
              via canvas->getBuffer()) to move data in or out. Potential
              for a lot of mayhem here if used wrong.
 */
-void *Adafruit_Image::getCanvas(void) const {
+void *Adafruit_Image_LittleFS::getCanvas(void) const {
   if (format != IMAGE_NONE) { // Image allocated?
     if (format == IMAGE_1)
       return (void *)canvas.canvas1;
@@ -180,7 +175,7 @@ void *Adafruit_Image::getCanvas(void) const {
              Vertical offset in pixels; top edge = 0, positive = down.
     @return  None (void).
 */
-void Adafruit_Image::draw(Adafruit_SPITFT &tft, int16_t x, int16_t y) {
+void Adafruit_Image_LittleFS::draw(Adafruit_SPITFT &tft, int16_t x, int16_t y) {
   if (format == IMAGE_1) {
     uint16_t foreground, background;
     if (palette) {
@@ -205,22 +200,14 @@ void Adafruit_Image::draw(Adafruit_SPITFT &tft, int16_t x, int16_t y) {
 /*!
     @brief   Constructor.
     @return  Adafruit_ImageReader object.
-    @param   fs
-             FAT filesystem associated with this Adafruit_ImageReader
-             instance. Any images to load will come from this filesystem;
-             if multiple filesystems are required, each will require its
-             own Adafruit_ImageReader object. The filesystem does NOT need
-             to be initialized yet when passed in here (since this will
-             often be in pre-setup() declaration, but DOES need initializing
-             before any of the image loading or size functions are called!
 */
-Adafruit_ImageReader::Adafruit_ImageReader(FatFileSystem &fs) { filesys = &fs; }
+Adafruit_ImageReader_LittleFS::Adafruit_ImageReader_LittleFS() {  }
 
 /*!
     @brief   Destructor.
     @return  None (void).
 */
-Adafruit_ImageReader::~Adafruit_ImageReader(void) {
+Adafruit_ImageReader_LittleFS::~Adafruit_ImageReader_LittleFS(void) {
   if (file)
     file.close();
   // filesystem is left as-is
@@ -246,7 +233,7 @@ Adafruit_ImageReader::~Adafruit_ImageReader(void) {
     @return  One of the ImageReturnCode values (IMAGE_SUCCESS on successful
              completion, other values on failure).
 */
-ImageReturnCode Adafruit_ImageReader::drawBMP(char *filename,
+ImageReturnCode Adafruit_ImageReader_LittleFS::drawBMP(char *filename,
                                               Adafruit_SPITFT &tft, int16_t x,
                                               int16_t y, boolean transact) {
   uint16_t tftbuf[BUFPIXELS]; // Temp space for buffering TFT data
@@ -270,7 +257,7 @@ ImageReturnCode Adafruit_ImageReader::drawBMP(char *filename,
     @return  One of the ImageReturnCode values (IMAGE_SUCCESS on successful
              completion, other values on failure).
 */
-ImageReturnCode Adafruit_ImageReader::loadBMP(char *filename,
+ImageReturnCode Adafruit_ImageReader_LittleFS::loadBMP(char *filename,
                                               Adafruit_Image &img) {
   // Call core BMP-reading function. TFT and working buffer are NULL
   // (unused and allocated in function, respectively), X & Y position are
@@ -307,7 +294,7 @@ ImageReturnCode Adafruit_ImageReader::loadBMP(char *filename,
     @return  One of the ImageReturnCode values (IMAGE_SUCCESS on successful
              completion, other values on failure).
 */
-ImageReturnCode Adafruit_ImageReader::coreBMP(
+ImageReturnCode Adafruit_ImageReader_LittleFS::coreBMP(
     char *filename,       // SD file to load
     Adafruit_SPITFT *tft, // Pointer to TFT object, or NULL if to image
     uint16_t *dest,       // TFT working buffer, or NULL if to canvas
@@ -354,7 +341,7 @@ ImageReturnCode Adafruit_ImageReader::coreBMP(
     return IMAGE_SUCCESS;
 
   // Open requested file on SD card
-  if (!(file = filesys->open(filename, FILE_READ))) {
+  if (!(file = LittleFS.open(filename, "r"))) {
     return IMAGE_ERR_FILE_NOT_FOUND;
   }
 
@@ -491,7 +478,7 @@ ImageReturnCode Adafruit_ImageReader::coreBMP(
                     tft->dmaWait();
                     tft->endWrite(); // End TFT SPI transaction
                   }
-                  file.seek(bmpPos);     // Seek = SD transaction
+                  file.seek(bmpPos, SeekSet);     // Seek = SD transaction
                   srcidx = sizeof sdbuf; // Force buffer reload
                 }
                 for (col = 0; col < loadWidth; col++) { // For each pixel...
@@ -509,12 +496,12 @@ ImageReturnCode Adafruit_ImageReader::coreBMP(
                               bytesThisPass;
                       while (bytesToGo > 0) {
                         bytesThisPass = min(bytesToGo, 512);
-                        file.read(&sdbuf[bytesRead], bytesThisPass);
+                        file.readBytes(&sdbuf[bytesRead], bytesThisPass);
                         bytesRead += bytesThisPass;
                         bytesToGo -= bytesThisPass;
                       }
 #else
-                      file.read(sdbuf, sizeof sdbuf); // Load from SD
+                      file.readBytes(sdbuf, sizeof sdbuf); // Load from SD
 #endif
                       if (transact)
                         tft->startWrite(); // Start TFT SPI transact
@@ -528,7 +515,7 @@ ImageReturnCode Adafruit_ImageReader::coreBMP(
                         destidx = 0; // and reset dest index
                       }
                     } else {                          // Canvas is simpler,
-                      file.read(sdbuf, sizeof sdbuf); // just load sdbuf
+                      file.readBytes(sdbuf, sizeof sdbuf); // just load sdbuf
                     }                                 // (destidx never resets)
                     srcidx = 0;                       // Reset bmp buf index
                   }
@@ -605,13 +592,13 @@ ImageReturnCode Adafruit_ImageReader::coreBMP(
     @return  One of the ImageReturnCode values (IMAGE_SUCCESS on successful
              completion, other values on failure).
 */
-ImageReturnCode Adafruit_ImageReader::bmpDimensions(char *filename,
+ImageReturnCode Adafruit_ImageReader_LittleFS::bmpDimensions(char *filename,
                                                     int32_t *width,
                                                     int32_t *height) {
 
   ImageReturnCode status = IMAGE_ERR_FILE_NOT_FOUND; // Guilty until innocent
 
-  if ((file = filesys->open(filename, FILE_READ))) { // Open requested file
+  if ((file = LittleFS.open(filename, "r"))) { // Open requested file
     status = IMAGE_ERR_FORMAT;  // File's there, might not be BMP tho
     if (readLE16() == 0x4D42) { // BMP signature?
       (void)readLE32();         // Read & ignore file size
@@ -642,12 +629,12 @@ ImageReturnCode Adafruit_ImageReader::bmpDimensions(char *filename,
              native endianism. (BMP files use little-endian values.)
     @return  Unsigned 16-bit value, native endianism.
 */
-uint16_t Adafruit_ImageReader::readLE16(void) {
+uint16_t Adafruit_ImageReader_LittleFS::readLE16(void) {
 #if !defined(ESP32) && !defined(ESP8266) &&                                    \
     (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
   // Read directly into result -- BMP data and variable both little-endian.
   uint16_t result;
-  file.read(&result, sizeof result);
+  file.readBytes(&result, sizeof result);
   return result;
 #else
   // Big-endian or unknown. Byte-by-byte read will perform reversal if needed.
@@ -661,12 +648,12 @@ uint16_t Adafruit_ImageReader::readLE16(void) {
              native endianism. (BMP files use little-endian values.)
     @return  Unsigned 32-bit value, native endianism.
 */
-uint32_t Adafruit_ImageReader::readLE32(void) {
+uint32_t Adafruit_ImageReader_LittleFS::readLE32(void) {
 #if !defined(ESP32) && !defined(ESP8266) &&                                    \
     (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
   // Read directly into result -- BMP data and variable both little-endian.
   uint32_t result;
-  file.read(&result, sizeof result);
+  file.readBytes(&result, sizeof result);
   return result;
 #else
   // Big-endian or unknown. Byte-by-byte read will perform reversal if needed.
@@ -684,7 +671,7 @@ uint32_t Adafruit_ImageReader::readLE32(void) {
              Output stream (Serial default if unspecified).
     @return  None (void).
 */
-void Adafruit_ImageReader::printStatus(ImageReturnCode stat, Stream &stream) {
+void Adafruit_ImageReader_LittleFS::printStatus(ImageReturnCode stat, Stream &stream) {
   if (stat == IMAGE_SUCCESS)
     stream.println(F("Success!"));
   else if (stat == IMAGE_ERR_FILE_NOT_FOUND)

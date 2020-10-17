@@ -12,11 +12,11 @@
  *
  * BSD license, all text here must be included in any redistribution.
  */
-#ifndef __ADAFRUIT_IMAGE_READER_H__
-#define __ADAFRUIT_IMAGE_READER_H__
+#ifndef __ADAFRUIT_IMAGE_READER_LITTLEFS_H__
+#define __ADAFRUIT_IMAGE_READER_LITTLEFS_H__
 
-#include "Adafruit_SPIFlash.h"
 #include "Adafruit_SPITFT.h"
+#include "LittleFS.h"
 
 /** Status codes returned by drawBMP() and loadBMP() */
 enum ImageReturnCode {
@@ -38,10 +38,10 @@ enum ImageFormat {
    @brief  Data bundle returned with an image loaded to RAM. Used by
            ImageReader.loadBMP() and Image.draw(), not ImageReader.drawBMP().
 */
-class Adafruit_Image {
+class Adafruit_Image_LittleFS {
 public:
-  Adafruit_Image(void);
-  ~Adafruit_Image(void);
+  Adafruit_Image_LittleFS(void);
+  ~Adafruit_Image_LittleFS(void);
   int16_t width(void) const;  // Return image width in pixels
   int16_t height(void) const; // Return image height in pixels
   void draw(Adafruit_SPITFT &tft, int16_t x, int16_t y);
@@ -77,13 +77,12 @@ protected:
   uint16_t *palette;       ///< Color palette for 8bpp image (or NULL)
   uint8_t format;          ///< Canvas bundle type in use
   void dealloc(void);      ///< Free/deinitialize variables
-  friend class Adafruit_ImageReader; ///< Loading occurs here
+  friend class Adafruit_ImageReader_LittleFS; ///< Loading occurs here
 };
 
 /*!
    @brief  An optional adjunct to Adafruit_SPITFT that reads RGB BMP
-           images (maybe others in the future) from a flash filesystem
-           (SD card or SPI/QSPI flash). It's purposefully been made an
+           images (maybe others in the future) from LittleFS. It's purposefully been made an
            entirely separate class (rather than part of SPITFT or GFX
            classes) so that Arduino code that uses GFX or SPITFT *without*
            image loading does not need to incur the RAM overhead and
@@ -92,10 +91,10 @@ protected:
            bizarre (passing display object as an argument), see examples
            for use.
 */
-class Adafruit_ImageReader {
+class Adafruit_ImageReader_LittleFS {
 public:
-  Adafruit_ImageReader(FatFileSystem &fs);
-  ~Adafruit_ImageReader(void);
+  Adafruit_ImageReader_LittleFS();
+  ~Adafruit_ImageReader_LittleFS(void);
   ImageReturnCode drawBMP(char *filename, Adafruit_SPITFT &tft, int16_t x,
                           int16_t y, boolean transact = true);
   ImageReturnCode loadBMP(char *filename, Adafruit_Image &img);
@@ -103,7 +102,6 @@ public:
   void printStatus(ImageReturnCode stat, Stream &stream = Serial);
 
 protected:
-  FatFileSystem *filesys; ///< FAT FileSystem Object
   File file;              ///< Current Open file
   ImageReturnCode coreBMP(char *filename, Adafruit_SPITFT *tft, uint16_t *dest,
                           int16_t x, int16_t y, Adafruit_Image *img,
@@ -112,4 +110,4 @@ protected:
   uint32_t readLE32(void);
 };
 
-#endif // __ADAFRUIT_IMAGE_READER_H__
+#endif // __ADAFRUIT_IMAGE_READER_LITTLEFS_H__
